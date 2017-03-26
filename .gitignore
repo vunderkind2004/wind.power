@@ -1,0 +1,13 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/Wind.Power/v14/.suo
+/Esp8266WiFiDevice/Debug
+/packages
+/Wind.Power.App/Wind.Power.App/bin/Debug
+/Wind.Power.App/Wind.Power.App/obj/Debug
+/Wind.Power.App/Wind.Power.App.Droid/bin/Debug
+/Wind.Power.App/Wind.Power.App.Droid/obj/Debug
+/Wind.Power.App/Wind.Power.App.iOS/obj/iPhone/Debug
+/Wind.Power.App/Wind.Power.App.Windows/obj/Debug
