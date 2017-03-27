@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Wind.Power.App.ViewModels;
 
 namespace Wind.Power.App.Services
@@ -7,9 +8,9 @@ namespace Wind.Power.App.Services
     {
         private Communication communication;
 
-        public delegate void MainSwitchStateUpdatedHandler(object sender, MainSwitchViewModel state);
+        public delegate void StateUpdatedHandler(object sender, StateViewModel state);
 
-        public event MainSwitchStateUpdatedHandler OnMainSwitchStateUpdated;
+        public event StateUpdatedHandler OnStateUpdated;
 
         public RemoteControl()
         {
@@ -19,28 +20,42 @@ namespace Wind.Power.App.Services
         public async Task Connect()
         {
             var state = await communication.GetMainSwitchState();
-            RaiseOnMainSwitchStateUpdated(state);
+            RaiseOnStateUpdated(state);
         }
 
         public async Task TurnOn()
         {
             var state = await communication.SendMainSwitchCommand(isTurnOn: true);
-            RaiseOnMainSwitchStateUpdated(state);
+            RaiseOnStateUpdated(state);
         }
 
         public async Task TurnOff()
         {
             var state = await communication.SendMainSwitchCommand(isTurnOn: false);
-            RaiseOnMainSwitchStateUpdated(state);
+            RaiseOnStateUpdated(state);
         }
 
-        protected virtual void RaiseOnMainSwitchStateUpdated(MainSwitchViewModel state)
+        public async Task ChangePwmFrequency(int newValue)
         {
-            var temp = OnMainSwitchStateUpdated;
+            var state = await communication.ChangePwmFrequency(newValue);
+            RaiseOnStateUpdated(state);
+        }
+
+        public async Task ChangePwmDuty(int newValue)
+        {
+            var state = await communication.ChangePwmDuty(newValue);
+            RaiseOnStateUpdated(state);
+        }
+
+        protected virtual void RaiseOnStateUpdated(StateViewModel state)
+        {
+            var temp = OnStateUpdated;
             if (temp != null)
             {
                 temp(this, state);
             }
         }
+
+        
     }
 }

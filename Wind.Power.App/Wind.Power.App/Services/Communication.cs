@@ -12,25 +12,39 @@ namespace Wind.Power.App.Services
         private HttpTransport transport;
 
         private string mainSwitchUrl = "/mainSwitch";
+        private string pwmUrl = "/pwm";
 
         public Communication(string baseUrl)
         {
             transport = new HttpTransport(baseUrl);
         }
 
-        public async Task<MainSwitchViewModel> SendMainSwitchCommand(bool isTurnOn)
+        public async Task<StateViewModel> SendMainSwitchCommand(bool isTurnOn)
         {
             var parameters = new Dictionary<string, object> { { "turnOn", isTurnOn.ToString().ToLower() } };
-            var result = await transport.Get<MainSwitchViewModel>(mainSwitchUrl, parameters);
+            var result = await transport.Get<StateViewModel>(mainSwitchUrl, parameters);
             return result;
         }
 
 
-        public async Task<MainSwitchViewModel> GetMainSwitchState()
+        public async Task<StateViewModel> GetMainSwitchState()
         {
-            var result = await transport.Get<MainSwitchViewModel>(mainSwitchUrl);
+            var result = await transport.Get<StateViewModel>(mainSwitchUrl);
             return result;
         }
 
+        public async Task<StateViewModel> ChangePwmFrequency(int newValue)
+        {
+            var parameters = new Dictionary<string, object> { { "frequency", newValue } };
+            var result = await transport.Get<StateViewModel>(pwmUrl, parameters);
+            return result;
+        }
+
+        public async Task<StateViewModel> ChangePwmDuty(int newValue)
+        {
+            var parameters = new Dictionary<string, object> { { "duty", newValue } };
+            var result = await transport.Get<StateViewModel>(pwmUrl, parameters);
+            return result;
+        }
     }
 }

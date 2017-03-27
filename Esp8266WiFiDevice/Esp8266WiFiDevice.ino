@@ -33,6 +33,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h> 
 #include <ESP8266WebServer.h>
+#include <EEPROM\EEPROM.h>
 
 /* Set these to your desired credentials. */
 const char *ssid = "wind.power";
@@ -40,6 +41,12 @@ const char *password = "test_123";
 
 String deviceId = "a06a2ed4-ea12-420c-9c50-bb01266c981c";
 String deviceName = "Wind Power";
+
+#define pwmPin D1
+int pwmFrequency;
+int pwmDuty;
+int modulationFrequency;
+int modulationDuty;
 
 bool isTurnOn;
 
@@ -59,8 +66,7 @@ void handleMainSwitch() {
 			DoCommand(server.argName(i), server.arg(i));
 			Serial.println("cmd: " + server.argName(i) + "=" + server.arg(i));
 		}
-		String result = isTurnOn == true ? "true" : "false";
-		server.send(200, "application/json", "{'isTurnOn':" + result +  "}");
+		SendState();
 		return;
 	}
 
@@ -68,6 +74,55 @@ void handleMainSwitch() {
 	{
 		server.send(200, "text/html", "<h1>not implemented yet</h1>");
 		return;
+	}
+
+}
+
+void SendState()
+{
+	String isTurnOnString = isTurnOn == true ? "true" : "false";
+	String message = "{'isTurnOn':" + isTurnOnString;
+
+	message += ", 'pwmFrequency':" + String(pwmFrequency);
+
+	message += ", 'pwmDuty':" + String(pwmDuty);
+	
+	message += "}";
+
+	server.send(200, "application/json", message);
+}
+
+void handlePWM()
+{
+	if (server.method() != HTTP_GET)
+		return;
+	for (uint8_t i = 0; i<server.args(); i++) {
+		DoPwmCommand(server.argName(i), server.arg(i));
+	}
+	ApplyPwmSettings();
+	SendState();
+}
+
+void DoPwmCommand(String cmd, String value)
+{
+	int v = value.toInt();
+	if (v <= 0)
+		v = 1;
+	if (cmd == "frequency")
+	{
+		pwmFrequency = v;		
+	}
+	else if (cmd == "duty")
+	{
+		pwmDuty = v;		
+	}
+	else if (cmd == "modFrequency")
+	{
+		modulationFrequency = v;
+	}
+	else if (cmd == "modDuty")
+	{
+		modulationDuty = v;
 	}
 
 }
@@ -119,12 +174,73 @@ void setup() {
 
 	server.on("/", handleRoot);
 	server.on("/mainSwitch", handleMainSwitch);
+	server.on("/pwm", handlePWM);
 	server.on("/equipmentList", handleDeviceList);
 
 	server.begin();
 	Serial.println("HTTP server started");
+
+	EEPROM.begin(8);
+
+	InitPWM();
 }
 
 void loop() {
-	server.handleClient();
+	server.handleClient();	
+
+}
+
+void InitPWM()
+{
+	PwmEepromRead();
+	if (pwmFrequency == 0)
+		pwmFrequency = 1000;
+	pinMode(D1, OUTPUT);
+	ApplyPwmSettings();
+}
+
+void ApplyPwmSettings()
+{
+	analogWriteFreq(pwmFrequency);
+	analogWrite(D1, pwmDuty);
+	PwmEepromWrite();
+}
+
+void PwmEepromWrite()
+{
+	EEPROMWriteInt(0, pwmFrequency);
+	EEPROMWriteInt(2, pwmDuty);
+	EEPROMWriteInt(4, modulationFrequency);
+	EEPROMWriteInt(6, modulationDuty);
+
+	
+
+	EEPROM.commit();
+}
+
+void PwmEepromRead()
+{
+	pwmFrequency = EEPROMReadInt(0);
+	pwmDuty = EEPROMReadInt(2);
+	modulationFrequency = EEPROMReadInt(4);
+	modulationDuty = EEPROMReadInt(6);
+}
+
+//This function will write a 2 byte integer to the eeprom at the specified address and address + 1
+void EEPROMWriteInt(int p_address, int p_value)
+{
+	byte lowByte = ((p_value >> 0) & 0xFF);
+	byte highByte = ((p_value >> 8) & 0xFF);
+
+	EEPROM.write(p_address, lowByte);
+	EEPROM.write(p_address + 1, highByte);
+}
+
+//This function will read a 2 byte integer from the eeprom at the specified address and address + 1
+unsigned int EEPROMReadInt(int p_address)
+{
+	byte lowByte = EEPROM.read(p_address);
+	byte highByte = EEPROM.read(p_address + 1);
+
+	return ((lowByte << 0) & 0xFF) + ((highByte << 8) & 0xFF00);
 }

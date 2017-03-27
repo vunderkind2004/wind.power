@@ -43,6 +43,7 @@
     <Compile Include="Services\RemoteControl.cs" />
     <Compile Include="Services\HttpTransport.cs" />
     <Compile Include="ViewModels\MainSwitchViewModel.cs" />
+    <Compile Include="ViewModels\StateViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
